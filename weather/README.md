@@ -38,6 +38,21 @@ flowchart LR
     style D fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
+### 注册时序（Server → Host）
+
+```mermaid
+sequenceDiagram
+    participant Host as MCP Host
+    participant Server as weather.py
+
+    Host->>Server: {"jsonrpc":"2.0","id":0,"method":"tools/list","params":{}}
+    
+    Server->>Host: {"jsonrpc":"2.0","id":0,"result":{"tools":[{"name":"get_alerts","description":"Get weather alerts for a US state.","parameters":{"type":"object","properties":{"state":{"type":"string","description":"Two-letter US state code (e.g. CA, NY)"}},"required":["state"]}},{"name":"get_forecast","description":"Get weather forecast for a location.","parameters":{"type":"object","properties":{"latitude":{"type":"number","description":"Latitude of the location"},"longitude":{"type":"number","description":"Longitude of the location"}},"required":["latitude","longitude"]}}]}}
+
+    Host->>Server: {"jsonrpc":"2.0","id":-1,"method":"shutdown","params":{}}
+    Server->>Host: {"jsonrpc":"2.0","id":-1,"result":null}
+```
+
 ### 交互时序（get_forecast）
 
 ```mermaid
