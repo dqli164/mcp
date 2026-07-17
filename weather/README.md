@@ -38,25 +38,39 @@ flowchart LR
     style D fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
-### 交互时序
+### 交互时序（get_forecast）
 
 ```mermaid
 sequenceDiagram
     participant Host as MCP Host
-    participant Logger as mcp_logger.py
     participant Server as weather.py
     participant NWS as NWS API
 
-    Host->>Logger: JSON-RPC 请求 (stdin)
-    Logger->>Logger: 记录日志 "输入: ..."
-    Logger->>Server: 转发请求 (stdin)
+    Host->>Server: {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_forecast","arguments":{"latitude":37.7749,"longitude":-122.4194}}}
     
-    Server->>NWS: HTTP GET 请求
-    NWS-->>Server: JSON 响应
+    Server->>NWS: GET /points/37.7749,-122.4194
+    NWS-->>Server: {"properties":{"forecast":"https://api.weather.gov/gridpoints/.../forecast"}}
     
-    Server->>Logger: JSON-RPC 响应 (stdout)
-    Logger->>Logger: 记录日志 "输出: ..."
-    Logger->>Host: 转发响应 (stdout)
+    Server->>NWS: GET /gridpoints/.../forecast
+    NWS-->>Server: {"properties":{"periods":[{"name":"Tonight","temperature":65,"temperatureUnit":"F","windSpeed":"10 mph","windDirection":"W","detailedForecast":"Clear skies..."},{"name":"Thursday","temperature":72,"temperatureUnit":"F","windSpeed":"15 mph","windDirection":"NW","detailedForecast":"Partly cloudy..."}]}}
+    
+    Server->>Host: {"jsonrpc":"2.0","id":1,"result":{"content":"Tonight:\nTemperature: 65°F\nWind: 10 mph W\nForecast: Clear skies...\n---\nThursday:\nTemperature: 72°F\nWind: 15 mph NW\nForecast: Partly cloudy..."}}
+```
+
+### 交互时序（get_alerts）
+
+```mermaid
+sequenceDiagram
+    participant Host as MCP Host
+    participant Server as weather.py
+    participant NWS as NWS API
+
+    Host->>Server: {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_alerts","arguments":{"state":"CA"}}}
+    
+    Server->>NWS: GET /alerts/active/area/CA
+    NWS-->>Server: {"features":[{"properties":{"event":"Flash Flood Warning","areaDesc":"Los Angeles County","severity":"Severe","description":"Flash flooding is expected...","instruction":"Move to higher ground..."}}]}
+    
+    Server->>Host: {"jsonrpc":"2.0","id":2,"result":{"content":"Event: Flash Flood Warning\nArea: Los Angeles County\nSeverity: Severe\nDescription: Flash flooding is expected...\nInstructions: Move to higher ground..."}}
 ```
 
 ## 交互原理
